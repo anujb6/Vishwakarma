@@ -2,6 +2,9 @@ import streamlit as st
 import re
 from typing import Dict, Any, Optional
 from utils.session_state import get_session_state, set_session_state
+import re
+import boto3
+from botocore.exceptions import ClientError
 
 def render_cloud_selector() -> Optional[Dict[str, Any]]:    
     st.subheader("☁️ Choose Your Cloud Provider")
@@ -270,12 +273,21 @@ def _validate_domain(domain: str) -> bool:
     return True
 
 def _validate_aws_credentials(access_key_id: str, secret_access_key: str) -> bool:
-    access_key_pattern = r'^AKIA[A-Z0-9]{16}$'
-    
-    secret_key_pattern = r'^[A-Za-z0-9+/]{40}$'
-    
-    return (re.match(access_key_pattern, access_key_id) is not None and 
-            re.match(secret_key_pattern, secret_access_key) is not None)
+    access_key_pattern = r'^(AKIA|ASIA|AGPA|AIDA|ANPA|AROA)[A-Z0-9]{16}$'
+    secret_key_pattern = r'^[A-Za-z0-9/+=]{40}$'
+
+    if not (re.match(access_key_pattern, access_key_id) and re.match(secret_key_pattern, secret_access_key)):
+        return False
+
+    try:
+        boto3.client(
+            "sts",
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key
+        ).get_caller_identity()
+        return True
+    except ClientError:
+        return False
 
 def _validate_azure_service_principal(tenant_id: str, client_id: str, client_secret: str, subscription_id: str) -> bool:
     uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'

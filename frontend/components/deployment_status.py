@@ -18,14 +18,14 @@ def render_deployment_status(api_client):
         st.write(f"**Deployment ID:** `{deployment_id[:12]}...`")
     
     with col2:
-        auto_refresh = st.checkbox("🔄 Auto-refresh", value=True)
+        auto_refresh = st.checkbox("🔄 Auto-refresh", value=True, key="auto_refresh_chk")
     
     with col3:
-        if st.button("🔍 Check Now"):
+        if st.button("🔍 Check Now", key="check_now_btn"):
             _check_deployment_status(api_client, deployment_id)
     
     with col4:
-        if st.button("🔄 New Deployment"):
+        if st.button("🔄 New Deployment", key="new_deployment_btn"):
             reset_deployment_state()
             set_session_state("current_step", 1)
             st.rerun()
@@ -41,36 +41,42 @@ def render_deployment_status(api_client):
     _check_deployment_status(api_client, deployment_id, status_container)
 
 def _check_deployment_status(api_client, deployment_id: str, container=None):    
-    if container is None:
-        container = st
+    target = container if container is not None else st
+
+    if container is not None:
+        with container:
+            _render_status(api_client, deployment_id, target)
+    else:
+        _render_status(api_client, deployment_id, target)
+
+
+def _render_status(api_client, deployment_id, target):
+    status_response = api_client.get_deployment_status(deployment_id)
     
-    with container:
-        status_response = api_client.get_deployment_status(deployment_id)
-        
-        if not status_response:
-            st.error("❌ Failed to get deployment status")
-            return
-        
-        status = status_response.get("status", "unknown")
-        url = status_response.get("url")
-        logs = status_response.get("logs", [])
-        created_at = status_response.get("created_at")
-        completed_at = status_response.get("completed_at")
-        
-        set_session_state("deployment_status", status)
-        set_session_state("deployment_url", url)
-        set_session_state("last_status_check", datetime.now().isoformat())
-        
-        _display_status_info(status, url, created_at, completed_at)
-        
-        if logs:
-            _display_deployment_logs(logs)
-        
-        if status == "completed" and url:
-            _display_success_actions(url)
-            set_session_state("step_deploy_done", True)
-        elif status == "failed":
-            _display_failure_actions()
+    if not status_response:
+        target.error("❌ Failed to get deployment status")
+        return
+    
+    status = status_response.get("status", "unknown")
+    url = status_response.get("url")
+    logs = status_response.get("logs", [])
+    created_at = status_response.get("created_at")
+    completed_at = status_response.get("completed_at")
+    
+    set_session_state("deployment_status", status)
+    set_session_state("deployment_url", url)
+    set_session_state("last_status_check", datetime.now().isoformat())
+    
+    _display_status_info(status, url, created_at, completed_at)
+    
+    if logs:
+        _display_deployment_logs(logs)
+    
+    if status == "completed" and url:
+        _display_success_actions(url)
+        set_session_state("step_deploy_done", True)
+    elif status == "failed":
+        _display_failure_actions()
 
 def _display_status_info(status: str, url: Optional[str], created_at: Optional[str], completed_at: Optional[str]):
     if status == "completed":
@@ -150,14 +156,14 @@ def _display_success_actions(url: str):
     with col2:
         st.write("**Quick Actions:**")
         
-        if st.button("🌐 Open Website", use_container_width=True):
+        if st.button("🌐 Open Website", use_container_width=True, key="open_website_btn"):
             st.markdown(f'<meta http-equiv="refresh" content="0; url={url}" />', unsafe_allow_html=True)
         
-        if st.button("📋 Copy URL", use_container_width=True):
+        if st.button("📋 Copy URL", use_container_width=True, key="copy_url_btn"):
             st.code(url)
             st.success("URL copied to display!")
         
-        if st.button("📊 View Details", use_container_width=True):
+        if st.button("📊 View Details", use_container_width=True, key="view_details_btn"):
             _show_deployment_details()
 
 def _display_failure_actions():
@@ -174,14 +180,14 @@ def _display_failure_actions():
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("🔄 Retry Deployment", type="primary"):
+        if st.button("🔄 Retry Deployment", type="primary", key="retry_btn"):
             set_session_state("step_cloud_done", False)
             set_session_state("current_step", 2)
             reset_deployment_state()
             st.rerun()
     
     with col2:
-        if st.button("🏠 Start Over"):
+        if st.button("🏠 Start Over", key="start_over_btn"):
             for key in list(st.session_state.keys()):
                 if key.startswith(('repo_', 'analysis_', 'cloud_', 'deploy_')):
                     del st.session_state[key]

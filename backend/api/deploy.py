@@ -97,7 +97,7 @@ async def deploy_project(request: DeployRequest, background_tasks: BackgroundTas
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error starting deployment: {e}")
+        print(f"Error starting deployment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/status/{deployment_id}", response_model=StatusResponse)
@@ -111,7 +111,11 @@ async def get_deployment_status(deployment_id: str):
             deployment_id=deployment_id,
             status=deployment_data.get("status", "unknown"),
             url=deployment_data.get("url"),
-            logs=deployment_data.get("logs", []),
+            logs=[
+                f"{log['timestamp']} - {log['message']}" 
+                if isinstance(log, dict) else str(log)
+                for log in deployment_data.get("logs", [])
+            ],
             created_at=deployment_data.get("created_at"),
             completed_at=deployment_data.get("completed_at")
         )
@@ -121,6 +125,7 @@ async def get_deployment_status(deployment_id: str):
     except Exception as e:
         logger.error(f"Error getting deployment status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/deployments")
 async def list_deployments(limit: int = 10, offset: int = 0):

@@ -1,6 +1,5 @@
-from typing import List, Optional
 from pydantic import BaseModel
-
+from typing import List, Optional
 
 class StatusResponse(BaseModel):
     deployment_id: str

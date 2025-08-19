@@ -56,6 +56,21 @@ class AWSDeployer(BaseDeployer):
                     
                 logger.info(f"Created S3 bucket: {bucket_name}")
                 
+                try:
+                    s3_client.put_bucket_ownership_controls(
+                        Bucket=bucket_name,
+                        OwnershipControls={
+                            'Rules': [
+                                {
+                                    'ObjectOwnership': 'BucketOwnerPreferred'
+                                }
+                            ]
+                        }
+                    )
+                    logger.info("Enabled ACL support for bucket")
+                except ClientError as e:
+                    logger.warning(f"Could not enable ACL support: {e}")
+                
             except ClientError as e:
                 if e.response['Error']['Code'] == 'BucketAlreadyExists':
                     timestamp = int(datetime.now().timestamp())
@@ -67,6 +82,21 @@ class AWSDeployer(BaseDeployer):
                         )
                     else:
                         s3_client.create_bucket(Bucket=bucket_name)
+                        
+                        try:
+                            s3_client.put_bucket_ownership_controls(
+                                Bucket=bucket_name,
+                                OwnershipControls={
+                                    'Rules': [
+                                        {
+                                            'ObjectOwnership': 'BucketOwnerPreferred'
+                                        }
+                                    ]
+                                }
+                            )
+                            logger.info("Enabled ACL support for bucket")
+                        except ClientError as e:
+                            logger.warning(f"Could not enable ACL support: {e}")
                 else:
                     raise
             
@@ -78,21 +108,45 @@ class AWSDeployer(BaseDeployer):
                 }
             )
             
-            bucket_policy = {
-                "Version": "2012-10-17",
-                "Statement": [{
-                    "Sid": "PublicReadGetObject",
-                    "Effect": "Allow",
-                    "Principal": "*",
-                    "Action": "s3:GetObject",
-                    "Resource": f"arn:aws:s3:::{bucket_name}/*"
-                }]
-            }
-            
-            s3_client.put_bucket_policy(
-                Bucket=bucket_name,
-                Policy=json.dumps(bucket_policy)
-            )
+            try:
+                s3_client.put_public_access_block(
+                    Bucket=bucket_name,
+                    PublicAccessBlockConfiguration={
+                        'BlockPublicAcls': False,
+                        'IgnorePublicAcls': False,
+                        'BlockPublicPolicy': False,
+                        'RestrictPublicBuckets': False
+                    }
+                )
+                logger.info("Disabled Block Public Access for bucket")
+                
+                import time
+                time.sleep(2)
+                
+                bucket_policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Sid": "PublicReadGetObject",
+                        "Effect": "Allow",
+                        "Principal": "*",
+                        "Action": "s3:GetObject",
+                        "Resource": f"arn:aws:s3:::{bucket_name}/*"
+                    }]
+                }
+                
+                s3_client.put_bucket_policy(
+                    Bucket=bucket_name,
+                    Policy=json.dumps(bucket_policy)
+                )
+                logger.info("Applied public bucket policy")
+                
+            except ClientError as e:
+                if "AccessDenied" in str(e) and "BlockPublicPolicy" in str(e):
+                    logger.warning("Cannot disable Block Public Access - insufficient permissions. Files will be uploaded but may not be publicly accessible.")
+                elif "AccessDenied" in str(e) and "PutBucketPolicy" in str(e):
+                    logger.warning("Cannot set bucket policy - insufficient permissions. Files will be uploaded but may not be publicly accessible.")
+                else:
+                    logger.error(f"Error configuring bucket access: {e}")
             
             uploaded_files = 0
             for root, dirs, files in os.walk(build_path):
@@ -107,10 +161,16 @@ class AWSDeployer(BaseDeployer):
                         content_type = 'binary/octet-stream'
                     
                     extra_args = {'ContentType': content_type}
+                    
                     if content_type.startswith(('text/', 'application/javascript', 'application/json')):
                         extra_args['CacheControl'] = 'max-age=3600' 
                     elif content_type.startswith(('image/', 'font/')):
                         extra_args['CacheControl'] = 'max-age=86400'
+                    
+                    try:
+                        extra_args['ACL'] = 'public-read'
+                    except:
+                        pass
                     
                     s3_client.upload_file(
                         local_path,
@@ -122,9 +182,9 @@ class AWSDeployer(BaseDeployer):
                     logger.debug(f"Uploaded: {s3_key}")
             
             if region == "us-east-1":
-                website_url = f"https://{bucket_name}.s3-website-us-east-1.amazonaws.com"
+                website_url = f"http://{bucket_name}.s3-website-us-east-1.amazonaws.com"
             else:
-                website_url = f"https://{bucket_name}.s3-website.{region}.amazonaws.com"
+                website_url = f"http://{bucket_name}.s3-website.{region}.amazonaws.com"
             
             deployment_metadata = {
                 "deployment_id": deployment_id,
@@ -152,7 +212,8 @@ class AWSDeployer(BaseDeployer):
                 "region": region,
                 "uploaded_files": uploaded_files,
                 "deployment_id": deployment_id,
-                "deployed_at": datetime.now().isoformat()
+                "deployed_at": datetime.now().isoformat(),
+                "note": "If site is not accessible, check S3 bucket public access settings in AWS console"
             }
             
         except Exception as e:

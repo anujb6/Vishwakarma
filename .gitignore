@@ -16,4 +16,7 @@ env/
 # Logs & temp files
 *.log
 
+#deployments
+data/
+temp/
 

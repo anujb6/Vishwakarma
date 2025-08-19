@@ -42,6 +42,7 @@ class APIClient:
         return self._make_request("POST", "/analyze", json=data)
     
     def deploy_project(self, deploy_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        print(f"Deploying with data: {deploy_data}")
         return self._make_request("POST", "/deploy", json=deploy_data)
     
     def get_deployment_status(self, deployment_id: str) -> Optional[Dict[str, Any]]:
