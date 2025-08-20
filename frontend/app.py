@@ -141,8 +141,8 @@ def main():
                 with col1:
                     st.success("✅ Repository analyzed successfully!")
                     st.write(f"**Repository:** {get_session_state('repo_url')}")
-                    st.write(f"**Framework:** {analysis.get('framework', 'Unknown')}")
-                    st.write(f"**Language:** {analysis.get('language', 'Unknown')}")
+                    st.write(f"**Framework:** {analysis['analysis'].get('framework', 'Unknown')}")
+                    st.write(f"**Language:** {analysis['analysis'].get('language', 'Unknown')}")
                 
                 with col2:
                     if st.button("🔄 Re-analyze Repository"):

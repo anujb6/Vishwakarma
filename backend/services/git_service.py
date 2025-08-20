@@ -31,9 +31,7 @@ class GitService:
             
             repo = git.Repo.clone_from(
                 repo_url, 
-                repo_path,
-                branch=branch,
-                depth=1 
+                repo_path
             )
             
             logger.info(f"Successfully cloned repository to {repo_path}")

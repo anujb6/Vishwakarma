@@ -50,6 +50,7 @@ def render_repo_analyzer(api_client) -> Optional[Dict[str, Any]]:
                 
                 analysis = analysis_result.get("analysis", {})
                 supported = analysis_result.get("supported", False)
+                set_session_state("analysis_result", analysis)
                 
                 _display_analysis_results(analysis, supported)
                 
@@ -87,27 +88,21 @@ def _validate_repo_url(url: str) -> bool:
     return any(host in url.lower() for host in git_hosts)
 
 def _display_analysis_results(analysis: Dict[str, Any], supported: bool):
-    
+    framework = analysis.get("framework") or "Unknown"
+    language = analysis.get("language") or "Unknown"
+
     col1, col2, col3 = st.columns(3)
-    
+
     with col1:
-        st.metric(
-            label="🔧 Framework",
-            value=analysis.get("framework", "Unknown").title()
-        )
-    
+        st.metric("🔧 Framework", framework.capitalize())
+
     with col2:
-        st.metric(
-            label="💻 Language", 
-            value=analysis.get("language", "Unknown").title()
-        )
-    
+        st.metric("💻 Language", language.capitalize())
+
     with col3:
         framework_status = "✅ Supported" if supported else "❌ Not Supported"
-        st.metric(
-            label="🎯 Status",
-            value=framework_status
-        )
+        st.metric("🎯 Status", framework_status)
+
     
     with st.expander("📊 Detailed Analysis", expanded=False):
         
