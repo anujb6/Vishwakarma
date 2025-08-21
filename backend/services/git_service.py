@@ -2,9 +2,7 @@ import git
 import os
 import hashlib
 import shutil
-from pathlib import Path
 import logging
-from typing import Optional
 
 from config import config
 

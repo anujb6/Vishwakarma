@@ -150,16 +150,3 @@ def _display_analysis_results(analysis: Dict[str, Any], supported: bool):
             for ext, count in sorted_extensions[:10]:
                 if ext:
                     st.write(f"**{ext}:** {count} files")
-
-def _get_framework_icon(framework: str) -> str:
-    icons = {
-        "react": "⚛️",
-        "vue": "💚", 
-        "angular": "🅰️",
-        "next": "▲",
-        "gatsby": "🟣",
-        "static": "📄",
-        "svelte": "🧡",
-        "nuxt": "💚"
-    }
-    return icons.get(framework.lower(), "🔧")

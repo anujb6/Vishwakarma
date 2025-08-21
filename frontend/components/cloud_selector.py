@@ -1,7 +1,7 @@
 import streamlit as st
 import re
 from typing import Dict, Any, Optional
-from utils.session_state import get_session_state, set_session_state
+from utils.session_state import set_session_state
 import re
 import boto3
 from botocore.exceptions import ClientError

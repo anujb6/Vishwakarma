@@ -1,7 +1,7 @@
 import streamlit as st
 import time
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Optional
 from utils.session_state import get_session_state, set_session_state, reset_deployment_state
 
 def render_deployment_status(api_client):
@@ -196,17 +196,30 @@ def _display_failure_actions():
             set_session_state("step_cloud_done", False)
             set_session_state("step_deploy_done", False)
             st.rerun()
+def _get_framework_icon(framework: str) -> str:
+    icons = {
+        "react": "⚛️",
+        "vue": "💚", 
+        "angular": "🅰️",
+        "next": "▲",
+        "gatsby": "🟣",
+        "static": "📄",
+        "svelte": "🧡",
+        "nuxt": "💚"
+    }
+    return icons.get(framework.lower(), "🔧")
 
 def _show_deployment_details():    
     with st.expander("📊 Deployment Details", expanded=True):
         st.subheader("📁 Repository")
         st.write(f"**URL:** {get_session_state('repo_url')}")
         st.write(f"**Branch:** {get_session_state('repo_branch')}")
+        icon = _get_framework_icon(analysis.get('framework', 'Unknown'))
         
         analysis = get_session_state("analysis_result", {}).get("analysis", {})
         if analysis:
             st.subheader("🔧 Build Configuration")
-            st.write(f"**Framework:** {analysis.get('framework', 'Unknown')}")
+            st.write(f"**Framework:** {analysis.get('framework', 'Unknown')} {icon}")
             st.write(f"**Language:** {analysis.get('language', 'Unknown')}")
             if analysis.get("build_command"):
                 st.write(f"**Build Command:** `{analysis.get('build_command')}`")

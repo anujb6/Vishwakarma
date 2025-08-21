@@ -7,7 +7,6 @@ from typing import List, Optional
 logger = logging.getLogger(__name__)
 
 def ensure_directory(path: str) -> bool:
-    """Ensure directory exists, create if it doesn't"""
     try:
         Path(path).mkdir(parents=True, exist_ok=True)
         return True
@@ -16,7 +15,6 @@ def ensure_directory(path: str) -> bool:
         return False
 
 def cleanup_directory(path: str) -> bool:
-    """Remove directory and all contents"""
     try:
         if os.path.exists(path):
             shutil.rmtree(path)
@@ -27,7 +25,6 @@ def cleanup_directory(path: str) -> bool:
         return False
 
 def copy_directory(source: str, destination: str) -> bool:
-    """Copy directory recursively"""
     try:
         if os.path.exists(destination):
             shutil.rmtree(destination)
@@ -38,7 +35,6 @@ def copy_directory(source: str, destination: str) -> bool:
         return False
 
 def get_directory_size(path: str) -> int:
-    """Get total size of directory in bytes"""
     total_size = 0
     try:
         for dirpath, dirnames, filenames in os.walk(path):
@@ -53,7 +49,6 @@ def get_directory_size(path: str) -> int:
     return total_size
 
 def get_files_in_directory(path: str, extensions: Optional[List[str]] = None) -> List[str]:
-    """Get list of files in directory, optionally filtered by extension"""
     files = []
     try:
         for root, dirs, filenames in os.walk(path):

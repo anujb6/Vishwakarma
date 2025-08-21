@@ -95,7 +95,6 @@ class BuildService:
         logger.info("All build commands completed successfully")
 
     async def _run_command(self, command: str, cwd: str, error_prefix: str):
-        """Run a shell command safely on Windows & Linux"""
         try:
             result = subprocess.run(
                 command,

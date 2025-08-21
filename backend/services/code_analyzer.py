@@ -40,7 +40,6 @@ class CodeAnalyzer:
                 analysis["is_static_site"] = True
             
             logger.info(f"Analysis completed: {analysis['language']}/{analysis['framework']}")
-            # print(f"Analysis: {analysis}")
             return analysis
             
         except Exception as e:
