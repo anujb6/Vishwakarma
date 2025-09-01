@@ -10,7 +10,6 @@ REDIRECT_URI = "http://localhost:8501"
 SCOPE = "repo"
 
 def get_github_auth_url():
-    """Generate GitHub OAuth authorization URL"""
     params = {
         'client_id': CLIENT_ID,
         'redirect_uri': REDIRECT_URI,
