@@ -4,8 +4,8 @@ import urllib.parse
 from typing import Any, Dict
 from utils.session_state import get_session_state, set_session_state
 
-CLIENT_ID = "Ov23liov0YrRLvIrHluW"
-CLIENT_SECRET = "191d47d26d28819628ebdbc841d8caa25d071181"
+CLIENT_ID = ""
+CLIENT_SECRET = ""
 REDIRECT_URI = "http://localhost:8501"
 SCOPE = "repo"
 
